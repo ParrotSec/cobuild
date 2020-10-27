@@ -1,0 +1,11 @@
+cobuild (0.2) rolling-testing; urgency=medium
+
+  * Make workdir copy silent.
+
+ -- Lorenzo "Palinuro" Faletra <palinuro@parrotsec.org>  Tue, 27 Oct 2020 03:38:45 +0100
+
+cobuild (0.1) rolling-testing; urgency=medium
+
+  * Initial commit.
+
+ -- Lorenzo "Palinuro" Faletra <palinuro@parrotsec.org>  Tue, 27 Oct 2020 03:13:17 +0100

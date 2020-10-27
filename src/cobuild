@@ -1,0 +1,176 @@
+ACTION=$1
+TARGET=$2
+SOURCE=$3
+
+# set default builder
+export BUILDER=docker.io/parrotsec/build:rolling-amd64
+
+function init {
+    apt update
+    apt -y install git-buildpackage devscripts rsync
+    mkdir -p /build/workdir
+    rsync -a /build/source/ /build/workdir/
+    cd /build/workdir
+    apt build-dep -y .
+}
+
+function sourcer {
+    mkdir -p /build/workdir
+    rsync -a /build/source/ /build/workdir/
+    cd /build/workdir
+    gbp export-orig 2> /dev/null || true
+    ./debian/rules clean
+    dpkg-source -b . 2>&1 | tee -a ../output/source.log
+    mv ../*.{dsc,tar.*,gz,xz,bz2,7z,zip,lzma,img,iso,bin,deb,udeb,rpm,appimage,Appimage,bin,exe,exec,run} ../output/ 2> /dev/null || true
+}
+
+function builder {
+    cd /build/workdir
+    gbp export-orig 2> /dev/null || true
+    debuild -us -uc -b 2>&1 | tee -a ../output/build.log
+    mv ../*.{dsc,tar.*,gz,xz,bz2,7z,zip,lzma,img,iso,bin,deb,udeb,rpm,appimage,Appimage,bin,exe,exec,run} ../output/ 2> /dev/null || true
+}
+
+function builder-indep {
+    cd /build/workdir
+    gbp export-orig 2> /dev/null || true
+    debuild -us -uc -- binary-indep 2>&1 | tee -a ../output/build.log
+    mv ../*.{dsc,tar.*,gz,xz,bz2,7z,zip,lzma,img,iso,bin,deb,udeb,rpm,appimage,Appimage,bin,exe,exec,run} ../output/ 2> /dev/null || true
+}
+
+function builder-any {
+    cd /build/workdir
+    gbp export-orig 2> /dev/null || true
+    debuild -us -uc -- binary-arch 2>&1 | tee -a ../output/build.log
+    mv ../*.{dsc,tar.*,gz,xz,bz2,7z,zip,lzma,img,iso,bin,deb,udeb,rpm,appimage,Appimage,bin,exe,exec,run} ../output/ 2> /dev/null || true
+}
+
+function linter {
+    cd /build/workdir
+    gbp export-orig 2> /dev/null || true
+    lintian --check --pedantic 2>&1 | tee -a ../output/lint.log || true
+}
+
+function launch_podman {
+    DEST=$SOURCE/../$DISTRO
+    mkdir -p $DEST
+    sudo podman run --rm -ti \
+        -v $(cd "$SOURCE"; pwd)/:/build/source/ \
+        -v $(cd "$DEST"; pwd):/build/output/ \
+        -v $0:/bin/cobuild.sh \
+        $BUILDER -- "/bin/cobuild.sh $INT_ACTION"
+}
+
+function host {
+    # use selected builder
+    case "$TARGET" in
+        parrot)
+            $0 $ACTION rolling $SOURCE
+            $0 $ACTION lts $SOURCE
+        ;;
+        rolling|parrot-rolling)
+            if [[ "$ACTION" == "source" ]]; then
+                $0 source parrot-rolling-amd64 $SOURCE
+            else
+                $0 $ACTION rolling-amd64 $SOURCE
+                $0 build-any rolling-i386 $SOURCE
+            fi
+        ;;
+        lts|parrot-lts)
+            if [[ "$ACTION" == "source" ]]; then
+                $0 source parrot-lts-amd64 $SOURCE
+            else
+                $0 $ACTION lts-amd64 $SOURCE
+                $0 build-any lts-i386 $SOURCE
+                $0 build-any lts-arm64 $SOURCE
+                $0 build-any lts-armhf $SOURCE
+            fi
+        ;;
+        rolling-amd64|parrot-rolling-amd64)
+            export DISTRO=parrot-rolling
+            export BUILDER=docker.io/parrotsec/build:rolling-amd64
+            launch_podman
+        ;;
+        rolling-i386|parrot-rolling-i386)
+            export DISTRO=parrot-rolling
+            export BUILDER=docker.io/parrotsec/build:rolling-i386
+            launch_podman
+        ;;
+        lts-amd64|parrot-lts-amd64)
+            export DISTRO=parrot-lts
+            export BUILDER=docker.io/parrotsec/build:lts-amd64
+            launch_podman
+        ;;
+        lts-i386|parrot-lts-i386)
+            export DISTRO=parrot-lts
+            export BUILDER=docker.io/parrotsec/build:lts-i386
+            launch_podman
+        ;;
+        lts-arm64|parrot-lts-arm64)
+            export DISTRO=parrot-lts
+            export BUILDER=docker.io/parrotsec/build:lts-arm64
+            launch_podman
+        ;;
+        lts-armhf|parrot-lts-armhf)
+            export DISTRO=parrot-lts
+            export BUILDER=docker.io/parrotsec/build:lts-armhf
+            launch_podman
+        ;;
+        *)
+            export DISTRO=generic-build
+            export BUILDER="$TARGET"
+            launch_podman
+        ;;
+    esac
+}
+
+case "$ACTION" in
+    source)
+        export INT_ACTION=internal-source
+        host
+    ;;
+    build)
+        export INT_ACTION=internal-build
+        host
+    ;;
+    build-indep)
+        export INT_ACTION=internal-build-indep
+        host
+    ;;
+    build-any)
+        export INT_ACTION=internal-build-any
+        host
+    ;;
+    lint|lintian|all)
+        export INT_ACTION=internal-lint
+        host
+    ;;
+    internal-source)
+        sourcer
+        exit
+    ;;
+    internal-build)
+        init
+        builder
+        exit
+    ;;
+     internal-build-indep)
+        init
+        builder-indep
+        exit
+    ;;
+     internal-build-any)
+        init
+        builder-any
+        exit
+    ;;
+    internal-lint)
+        init
+        builder
+        linter
+        exit
+    ;;
+    *)
+        echo "wip"
+    ;;
+esac

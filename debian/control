@@ -1,0 +1,19 @@
+Source: cobuild
+Priority: optional
+Maintainer: Lorenzo "Palinuro" Faletra <palinuro@parrotsec.org>
+Uploaders: Lorenzo "Palinuro" Faletra <palinuro@parrotsec.org>
+Standards-Version: 4.3.0
+Section: info
+Build-Depends: debhelper (>= 10)
+Build-Depends-Indep: pkg-config
+Homepage: https://www.parrotsec.org/
+
+
+Package: cobuild
+Architecture: all
+Depends: podman | docker
+Section: build-tools
+Priority: optional
+Homepage: https://www.parrotsec.org
+Description: Parrot utility to build deb packages using containers
+ This utility builds deb packages by using containers.
