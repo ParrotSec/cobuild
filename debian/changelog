@@ -1,8 +1,14 @@
-cobuild (0.3) rolling-testing; urgency=medium
+cobuild (0.4) rolling-testing; urgency=medium
 
   * Add missing crun dependency.
 
  -- Lorenzo "Palinuro" Faletra <palinuro@parrotsec.org>  Mon, 16 Nov 2020 13:01:08 +0100
+
+cobuild (0.4) rolling-testing; urgency=medium
+
+  * Add shebang.
+
+ -- Lorenzo "Palinuro" Faletra <palinuro@parrotsec.org>  Thu, 05 Nov 2020 16:00:39 +0200
 
 cobuild (0.2) rolling-testing; urgency=medium
 
