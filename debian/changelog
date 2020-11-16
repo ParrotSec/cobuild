@@ -1,3 +1,9 @@
+cobuild (0.3) rolling-testing; urgency=medium
+
+  * Add missing crun dependency.
+
+ -- Lorenzo "Palinuro" Faletra <palinuro@parrotsec.org>  Mon, 16 Nov 2020 13:01:08 +0100
+
 cobuild (0.2) rolling-testing; urgency=medium
 
   * Make workdir copy silent.

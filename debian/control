@@ -11,7 +11,7 @@ Homepage: https://www.parrotsec.org/
 
 Package: cobuild
 Architecture: all
-Depends: podman | docker
+Depends: podman | docker, crun
 Section: build-tools
 Priority: optional
 Homepage: https://www.parrotsec.org
